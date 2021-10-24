@@ -18,3 +18,7 @@
 # 软件截图
 
 ![image](https://github.com/theseazhang/keyclone/blob/main/images/screenshot.png)
+
+# 鸣谢
+
+本程序由[aardio](https://www.aardio.com/)开发，正因为aardio封装了key.hook和winex等强大的标准库，才能用很少的代码实现这些功能。
