@@ -1,0 +1,43 @@
+import win.ui
+import style
+/*DSG{{*/
+var winform = win.form(text="新增按键";right=434;bottom=59;border="dialog frame";max=false;min=false)
+winform.add(
+edit={cls="edit";left=5;top=10;right=300;bottom=50;autohscroll=false;autovscroll=false;edge=1;font=LOGFONT(h=-21);readonly=1;z=1};
+plus={cls="plus";text="确定";left=310;top=10;right=430;bottom=50;bgcolor=32768;font=LOGFONT(h=-21);notify=1;z=2}
+)
+/*}}*/
+
+import key.hook
+var hook = key.hook()
+
+//录制回调函数
+hook.proc = function(msg,vkcode,scancode,injected,flags,timeStamp,extraInfo){ 
+	if(injected) return; //模拟鼠标不处理
+    var kn = key.getName(vkcode); 
+    select(msg) {
+    	case 0x100/*_WM_KEYDOWN*/ ,0x104/*_WM_SYSKEYDOWN*/ {
+    	    winform.edit.text = kn
+    	} 
+    }
+}
+
+winform.plus.skin(style.btn)
+winform.plus.oncommand = function(id,event){
+	if(hook){
+    	hook.close()
+    	hook = null
+    }
+    winform.endModal(winform.edit.text)
+}
+
+winform.onClose = function(hwnd,message,wParam,lParam){
+    if(hook){
+    	hook.close()
+    	hook = null
+    }
+}
+
+winform.show();
+win.loopMessage();
+return winform;

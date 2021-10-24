@@ -1,0 +1,68 @@
+﻿namespace style
+
+btn = {
+	background={
+		default=0xFF099DFD;
+		hover=0xFF006AD8;
+		active=0xFF006AD8;
+		disabled=0xFF333333;
+	};
+	color={
+		default=0xFFFFFFFF;
+		disabled=0xFFFFFFFF;
+	};
+}
+
+btnSuccess = {
+	background={
+		default=0xFF198754;
+		hover=0xFF157347;
+		active=0xFF157347;
+		disabled=0xFF333333;
+	};
+	color={
+		default=0xFFFFFFFF;
+		disabled=0xFFFFFFFF;
+	};
+}
+
+btnDanger = {
+	background={
+		default=0xFFDC3545;
+		hover=0xFFBB2C3B;
+		active=0xFFBB2C3B;
+		disabled=0xFF333333;
+	};
+	color={
+		default=0xFFFFFFFF;
+		disabled=0xFFFFFFFF;
+	};
+}
+
+btnWarning = {
+	background={
+		default=0xFFffc107;
+		hover=0xFFFFCA2C;
+		active=0xFFFFCA2C;
+		disabled=0xFF333333;
+	};
+	color={
+		default=0xFF000000;
+		disabled=0xFFFFFFFF;
+	};
+}
+
+btnInfo = {
+	background={
+		default=0xFFE1E1E1;
+		hover=0xFF099DFD;
+		active=0xFF099DFD;
+		disabled=0xFF333333;
+	};
+	color={
+		default=0xFF000000;
+		hover=0xFFFFFFFF;
+		active=0xFFFFFFFF;
+		disabled=0xFFFFFFFF;
+	};
+}

@@ -1,0 +1,293 @@
+//RUNAS//
+import win.ui
+import win.ui.atom
+import win.ui.menu
+import style
+import console
+import key.hook
+import winex.key
+import fsys.dlg
+import fsys.table
+import win.cur
+import winex
+import mouse
+import fsys.config
+import process
+/*DSG{{*/
+mainForm = win.form(text="键盘同步器";right=484;bottom=374;border="dialog frame";max=false)
+mainForm.add(
+combobox={cls="combobox";left=90;top=35;right=145;bottom=60;edge=1;items={"2";"3";"4";"5";"10";"20";"25"};mode="dropdownlist";z=4};
+edit={cls="edit";left=90;top=5;right=480;bottom=30;edge=1;multiline=1;num=1;z=1};
+listview={cls="listview";left=5;top=65;right=270;bottom=370;bgcolor=16777215;edge=1;fullRow=1;gridLines=1;msel=false;vscroll=1;z=7};
+listview2={cls="listview";left=295;top=65;right=480;bottom=370;bgcolor=16777215;edge=1;fullRow=1;gridLines=1;msel=false;vscroll=1;z=10};
+plus={cls="plus";text="选择游戏";left=5;top=5;right=85;bottom=30;bgcolor=32768;notify=1;z=2};
+plus2={cls="plus";text="启动游戏";left=5;top=35;right=85;bottom=60;bgcolor=32768;notify=1;z=3};
+plus3={cls="plus";text="绑定窗口";left=190;top=35;right=270;bottom=60;bgcolor=32768;notify=1;z=6};
+plus4={cls="plus";text="开始同步";left=295;top=35;right=375;bottom=60;bgcolor=32768;notify=1;z=8};
+plus5={cls="plus";text="停止同步";left=400;top=35;right=480;bottom=60;bgcolor=32768;notify=1;z=9};
+static={cls="static";text="开";left=155;top=35;right=180;bottom=60;center=1;transparent=1;z=5}
+)
+/*}}*/
+
+var atom, hwnd = mainForm.atom("DD437306-782B-4B3D-81DD-F30F722035BC.键盘同步器")
+if(!atom){
+	win.setForeground(hwnd)
+	return;
+}
+
+var conf = fsys.config("/config/");
+mainForm.bindConfig(conf.mainForm, {
+    edit = "text";
+    checkbox = "checked";
+    combobox = "selIndex";
+});
+
+if(!mainForm.combobox.selIndex) mainForm.combobox.selIndex = 1
+
+var hwnds = {}
+
+var fstb = fsys.table("/config/conf.table")
+if(!fstb[['keyList']]){
+	fstb[['keyList']] = {
+		["0"] = 1;
+		["1"] = 1;
+		["2"] = 1;
+		["3"] = 1;
+		["4"] = 1;
+		["5"] = 1;
+		["6"] = 1;
+		["7"] = 1;
+		["8"] = 1;
+		["9"] = 1;
+		["Q"] = 1;
+		["E"] = 1;
+		["R"] = 1;
+		["F"] = 1;
+		["SPACE"] = 1;
+		["TAB"] = 1;
+	}
+}
+
+mainForm.plus.skin(style.btn)
+mainForm.plus.oncommand = function(id,event){
+	var path = fsys.dlg.open("exe文件|*.exe|所有文件|*.*")
+	if(path) mainForm.edit.text = path
+}
+
+mainForm.plus2.skin(style.btnDanger)
+mainForm.plus2.oncommand = function(id,event){
+	var path = mainForm.edit.text
+	if(!#path){
+		mainForm.msgboxErr("未选择游戏启动路径")
+		return; 
+	}
+	if(!io.exist(path)){
+		mainForm.msgboxErr("游戏启动路径错误")
+		return;
+	}
+	var n = tonumber(mainForm.combobox.selText)
+	for(i=1;n;1){
+		process.execute(path)
+	}
+}
+
+mainForm.listview.setColumns({"序号","窗口句柄","进程ID"})
+
+mainForm.popmenu = win.ui.popmenu(mainForm);//创建弹出菜单
+
+mainForm.listview.onnotify = function(id,code,ptr){
+    select(code) {
+    	case 0xFFFFFFFB/*_NM_RCLICK*/ {
+    		mainForm.popmenu.popup(x,y,true);//弹出菜单
+    	}
+    }
+}
+
+mainForm.popmenu.add('定位窗口',function(id){
+	var index = mainForm.listview.selIndex
+	if(index){
+		var hwnd = tonumber(mainForm.listview.getItemText(index, 2))
+		win.setForeground(hwnd)
+	}
+});
+
+mainForm.popmenu.add('解绑窗口',function(id){
+	var index = mainForm.listview.selIndex
+	if(index){
+		var hwnd = tonumber(mainForm.listview.getItemText(index, 2))
+		table.removeByValue(hwnds, hwnd)
+		mainForm.listview.delItem(index)
+	}
+});
+
+mainForm.popmenu.add('解绑并关闭',function(id){
+	var index = mainForm.listview.selIndex
+	if(index){
+		var hwnd = tonumber(mainForm.listview.getItemText(index, 2))
+		table.removeByValue(hwnds, hwnd)
+		mainForm.listview.delItem(index)
+		winex.close(hwnd)
+	}
+});
+
+mainForm.plus3.skin(style.btn)
+mainForm.plus3.oncommand = function(id,event){
+	mainForm.plus3.disabled = true
+	var index = 0
+	mainForm.listview.clear()
+	hwnds = {}
+	var s = ".*.exe"
+	var path = mainForm.edit.text
+	if(io.exist(path)) s = io.splitpath(path).file
+	for processEntry in process.each(s) {
+		var pid = processEntry.th32ProcessID
+		var hwnd = winex.findMainWnd(,,pid)
+		if(hwnd) {
+			index += 1
+			mainForm.listview.addItem({index, hwnd, pid})
+			table.push(hwnds, hwnd)
+		}
+	}
+	mainForm.plus3.disabled = false
+}
+
+
+
+mainForm.plus4.skin(style.btnWarning)
+mainForm.plus4.oncommand = function(id,event){
+	if(!#hwnds){
+		mainForm.msgboxErr("请先绑定游戏窗口")
+		return;
+	}
+	mainForm.plus4.disabled = true
+	hook = key.hook()
+	hook.proc = function(msg,vkcode,scancode,injected,flags,timeStamp,extraInfo){ 
+		if(injected) return; //模拟鼠标不处理
+    	var kn = key.getName(vkcode)
+    	if(!fstb[['keyList']][[kn]]) return; //只响应指定按键
+    	var currentHwnd = win.getForeground() //当前激活窗口句柄
+    	select(msg) {
+    		case 0x100/*_WM_KEYDOWN*/ ,0x104/*_WM_SYSKEYDOWN*/ {
+    		    for(i=1;#hwnds;1){
+    		        if(currentHwnd != hwnds[i]) winex.key.down(hwnds[i], kn)
+    		    }
+    		}
+    		case 0x101/*_WM_KEYUP*/,0x105/*_WM_SYSKEYUP*/ {
+    	    	for(i=1;#hwnds;1){
+    		        if(currentHwnd != hwnds[i]) winex.key.up(hwnds[i], kn)
+    		    }
+    		}
+    	}
+	}
+}
+
+mainForm.plus5.skin(style.btnWarning)
+mainForm.plus5.oncommand = function(id,event){
+	if(hook) {
+		hook.close()
+		hook = null
+	}
+	mainForm.plus4.disabled = false
+}
+
+mainForm.onDestroy = function(){
+    if(hook) {
+		hook.close()
+		hook = null
+	}
+}
+
+mainForm.listview2.setColumns({"同步按键"})
+
+var loadData = function(){
+	mainForm.listview2.clear()
+	for k,v in table.eachName(fstb[['keyList']]){
+		mainForm.listview2.addItem(k)
+	}
+}
+
+loadData()
+
+
+mainForm.popmenu2 = win.ui.popmenu(mainForm);//创建弹出菜单
+
+mainForm.listview2.onnotify = function(id,code,ptr){
+    select(code) {
+    	case 0xFFFFFFFB/*_NM_RCLICK*/ {
+    		mainForm.popmenu2.popup(x,y,true);//弹出菜单
+    	}
+    }
+}
+
+mainForm.popmenu2.add('删除',function(id){
+	var index = mainForm.listview2.selIndex
+	if(index){
+		var x = mainForm.listview2.getItemText(index)
+		mainForm.listview2.delItem(index)
+		fstb[['keyList']][[x]] = null
+		fstb.save()
+	}
+});
+
+mainForm.popmenu2.add('新增',function(id){
+	var x = mainForm.loadForm("\dlg\addKey.aardio").doModal()
+	if(#x) {
+		if(fstb[['keyList']][[x]]){
+			mainForm.msgboxErr("该按键已经存在")
+			return; 
+		}
+		fstb[['keyList']][[x]] = 1
+		fstb.save()
+		loadData()
+	}
+});
+
+mainForm.popmenu2.add('清空',function(id){
+	if(!mainForm.msgboxTest("确定清空所有按键吗？")) return;
+	fstb[['keyList']] = {}
+	fstb.save()
+	mainForm.listview2.clear()
+});
+
+mainForm.popmenu2.add('仅数字按键',function(id){
+	fstb[['keyList']] = {
+		["0"] = 1;
+		["1"] = 1;
+		["2"] = 1;
+		["3"] = 1;
+		["4"] = 1;
+		["5"] = 1;
+		["6"] = 1;
+		["7"] = 1;
+		["8"] = 1;
+		["9"] = 1;
+	}
+	fstb.save()
+	loadData()
+});
+
+mainForm.popmenu2.add('恢复初始值',function(id){
+	fstb[['keyList']] = {
+		["0"] = 1;
+		["1"] = 1;
+		["2"] = 1;
+		["3"] = 1;
+		["4"] = 1;
+		["5"] = 1;
+		["6"] = 1;
+		["7"] = 1;
+		["8"] = 1;
+		["9"] = 1;
+		["Q"] = 1;
+		["E"] = 1;
+		["R"] = 1;
+		["F"] = 1;
+		["SPACE"] = 1;
+		["TAB"] = 1;
+	}
+	fstb.save()
+	loadData()
+});
+
+mainForm.show();
+return win.loopMessage();

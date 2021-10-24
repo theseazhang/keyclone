@@ -1,0 +1,6 @@
+﻿{
+edit="";
+afterLoad=null;
+beforeSave=null;
+combobox=1
+}
