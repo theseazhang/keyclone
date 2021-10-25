@@ -35,7 +35,8 @@ if(!atom){
 	return;
 }
 
-var conf = fsys.config("/config/");
+
+var conf = fsys.config(io.appData("/keyclone/config/"));
 mainForm.bindConfig(conf.mainForm, {
     edit = "text";
     checkbox = "checked";
@@ -46,7 +47,7 @@ if(!mainForm.combobox.selIndex) mainForm.combobox.selIndex = 1
 
 var hwnds = {}
 
-var fstb = fsys.table("/config/conf.table")
+var fstb = fsys.table(io.appData("/keyclone/config/conf.table"))
 if(!fstb[['keyList']]){
 	fstb[['keyList']] = {
 		["0"] = 1;
